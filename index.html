@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💖 Para Você, Meu Amor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Trebuchet MS', Tahoma, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Mensagem romântica sobreposta */
+    #msg {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      animation: fadeIn 3s ease forwards;
+      opacity: 0;
+    }
+
+    #msg p {
+      color: #ff4fd8;
+      font-size: clamp(13px, 2vw, 18px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow:
+        0 0 10px #ff4fd8,
+        0 0 30px #ff20a0,
+        0 0 60px #aa006688;
+      animation: pulse-text 3s ease-in-out infinite;
+    }
+
+    #msg small {
+      display: block;
+      margin-top: 6px;
+      color: rgba(255, 150, 220, 0.5);
+      font-size: clamp(10px, 1.4vw, 13px);
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes fadeIn {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes pulse-text {
+      0%, 100% { opacity: 0.85; }
+      50%       { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="msg">
+  <p>✦ Feito com amor, só para você ✦</p>
+  <small>pressione F para tela cheia</small>
+</div>
+
+<script>
+  const canvas = document.getElementById('c');
+  const ctx    = canvas.getContext('2d');
+
+  /* ── Resize ── */
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); init(); });
+
+  /* ── Fullscreen com F ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  /* ── Parâmetros ── */
+  const NUM   = 340;
+  const SPARKS = 80;
+  let particles = [], sparks = [], t = 0;
+
+  /* ── Curva paramétrica do coração ── */
+  function hx(a, s) { return 16 * Math.pow(Math.sin(a), 3) * s; }
+  function hy(a, s) {
+    return -(13*Math.cos(a) - 5*Math.cos(2*a) - 2*Math.cos(3*a) - Math.cos(4*a)) * s;
+  }
+
+  function lerp(a, b, k) { return a + (b - a) * k; }
+
+  /* ── Inicializa partículas ── */
+  function init() {
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+
+    particles = [];
+    for (let i = 0; i < NUM; i++) {
+      particles.push({
+        x:    cx + (Math.random() - 0.5) * canvas.width,
+        y:    cy + (Math.random() - 0.5) * canvas.height,
+        tx: cx, ty: cy,
+        angle: (i / NUM) * Math.PI * 2,
+        px:   Math.random() * Math.PI * 2,
+        py:   Math.random() * Math.PI * 2,
+        spd:  0.55 + Math.random() * 0.9,
+        alpha: 0.72 + Math.random() * 0.28,
+        size:  clampSize(),
+        twinkle: 0,
+      });
+    }
+
+    sparks = [];
+    for (let i = 0; i < SPARKS; i++) sparks.push(makeSpark(cx, cy));
+  }
+
+  function clampSize() {
+    const base = Math.min(canvas.width, canvas.height);
+    return (base / 80) * (0.85 + Math.random() * 0.55);
+  }
+
+  /* ── Faísca decorativa ── */
+  function makeSpark(cx, cy) {
+    const ang = Math.random() * Math.PI * 2;
+    const r   = 70 + Math.random() * 140;
+    return {
+      x: cx + Math.cos(ang) * r,
+      y: cy + Math.sin(ang) * r,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: -0.15 - Math.random() * 0.65,
+      life:    Math.random(),
+      maxLife: 0.45 + Math.random() * 0.9,
+      size:    0.8 + Math.random() * 2.5,
+      cx, cy
+    };
+  }
+
+  /* ── Desenha texto com glow neon ── */
+  function drawLove(x, y, alpha, size) {
+    ctx.save();
+    ctx.font        = `bold ${size}px 'Trebuchet MS', Tahoma, sans-serif`;
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+
+    /* camadas de glow */
+    const glows = [
+      { blur: 22, color: `rgba(255,10,110,${alpha * 0.18})`,  scale: 1.65 },
+      { blur: 12, color: `rgba(255,79,216,${alpha * 0.27})`,  scale: 1.30 },
+      { blur: 5,  color: `rgba(255,160,235,${alpha * 0.38})`, scale: 1.10 },
+    ];
+    for (const g of glows) {
+      ctx.shadowBlur  = g.blur;
+      ctx.shadowColor = g.color;
+      ctx.fillStyle   = g.color;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(g.scale, g.scale);
+      ctx.fillText('LOVE', 0, 0);
+      ctx.restore();
+    }
+
+    /* texto nítido */
+    ctx.shadowBlur  = 0;
+    ctx.fillStyle   = `rgba(255, 200, 240, ${alpha})`;
+    ctx.fillText('LOVE', x, y);
+    ctx.restore();
+  }
+
+  /* ── Loop principal ── */
+  function frame() {
+    requestAnimationFrame(frame);
+    t += 0.016;
+
+    /* fundo com persistência suave (trail neon) */
+    ctx.fillStyle = 'rgba(0,0,0,0.17)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cx    = canvas.width  / 2;
+    const cy    = canvas.height / 2 + canvas.height * 0.02;
+    const pulse = 1 + Math.sin(t * 2.4) * 0.075;
+    const scale = Math.min(canvas.width, canvas.height) * 0.027 * pulse;
+
+    /* bloom central */
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, 180 * pulse);
+    gr.addColorStop(0,   'rgba(255,20,130,0.08)');
+    gr.addColorStop(0.5, 'rgba(180,0,90,0.04)');
+    gr.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 220, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* partículas LOVE */
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+
+      /* alvo pulsado */
+      p.tx = cx + hx(p.angle, scale);
+      p.ty = cy + hy(p.angle, scale);
+
+      /* easing suave */
+      p.x = lerp(p.x, p.tx, 0.055);
+      p.y = lerp(p.y, p.ty, 0.055);
+
+      /* flutuar orgânico */
+      const fx = Math.sin(t * p.spd + p.px) * 5.5;
+      const fy = Math.cos(t * p.spd + p.py) * 5.5;
+
+      /* cintilação aleatória */
+      if (Math.random() < 0.012) p.twinkle = 0.25 + Math.random() * 0.55;
+      const a = p.twinkle > 0 ? p.twinkle : p.alpha;
+      if (p.twinkle > 0) p.twinkle -= 0.02;
+
+      drawLove(p.x + fx, p.y + fy, a, p.size);
+    }
+
+    /* faíscas */
+    for (let i = 0; i < sparks.length; i++) {
+      const sp = sparks[i];
+      sp.x    += sp.vx;
+      sp.y    += sp.vy;
+      sp.life -= 0.011;
+
+      if (sp.life <= 0) { sparks[i] = makeSpark(cx, cy); continue; }
+
+      const a = Math.max(0, sp.life / sp.maxLife);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sp.size * a, 0, Math.PI * 2);
+      ctx.fillStyle   = `rgba(255,200,240,${a * 0.9})`;
+      ctx.shadowBlur  = 10;
+      ctx.shadowColor = 'rgba(255,80,200,0.7)';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  init();
+  frame();
+</script>
+</body>
+</html>
