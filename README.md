@@ -1,2 +1,2 @@
 # love
-Isso é para melhor data do ano, o aniversário de uma pessoa incrível que eu amo.
+O aniversário de uma pessoa incrível que eu amo.
